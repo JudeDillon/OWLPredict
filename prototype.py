@@ -190,6 +190,7 @@ team_two_name = switch(int(team_two_input))
 team_one_win_rate = get_winrate(team_one_name, dataset_with_winrate_difference, None)
 team_two_win_rate = get_winrate(team_two_name, dataset_with_winrate_difference, None)
 winrate_difference = team_one_win_rate - team_two_win_rate
+print("Winrate Difference = " + str(winrate_difference))
 
 #predict which team will win and display it to the user
 prediction = predict_classification(dataset_with_winrate_difference, winrate_difference, num_neighbors)
@@ -198,4 +199,5 @@ print(prediction)
 #uncomment these lines to create csv of the final state of the dataset
 # with open('finalDataset.csv', 'w') as f:
 #     for item in dataset_with_winrate_difference:
-#         f.write("%s\n" % item)
+#         f.write(','.join(map(str, item)))
+#         f.write("\n")
