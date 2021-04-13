@@ -40,15 +40,15 @@ def add_team_one_win_status(proto_dataset):
             team_one_win[row].append(0)
     return team_one_win
 
-def get_winrate(team_name, dataset, match_id):
+def get_winrate(team_name, dataset, round_start_time):
     total_games = 0
     total_wins = 0
 
     for match in range(0,len(dataset)):
-        old_match_id = dataset[match][3]
+        old_round_start_time = dataset[match][0]
         #if the match has already occured before the selected match or selected match has no match id
         #then include it as a match to check
-        if((match_id is None) or (int(match_id) > int(old_match_id))):
+        if((round_start_time is None) or (round_start_time > old_round_start_time)):
             old_game_team_one = dataset[match][15]
             old_game_team_two = dataset[match][16]
             old_game_winner = dataset[match][5]
@@ -76,11 +76,11 @@ def get_winrate_differences(dataset):
     for row in range(0,len(dataset)):
         team_one = dataset[row][15]
         team_two = dataset[row][16]
-        match_id = dataset[row][3]
+        round_start_time = dataset[row][0]
 
         #get team one and team two  winrate
-        team_one_winrate = get_winrate(team_one, dataset, match_id)
-        team_two_winrate = get_winrate(team_two, dataset, match_id)
+        team_one_winrate = get_winrate(team_one, dataset, round_start_time)
+        team_two_winrate = get_winrate(team_two, dataset, round_start_time)
         
         #calculate winrate difference and add to list of winrate differences
         winrate_diff = team_one_winrate - team_two_winrate
@@ -164,7 +164,7 @@ filename = 'match_map_stats.csv'
 #makes a 2D list from the map stats file
 dataset = load_csv(filename)
 #removes data from matches outside of the 2020 Season of OWL
-dataset = filter_dataset(dataset, "OWL 2020 Regular Season")
+#dataset = filter_dataset(dataset, "OWL 2020 Regular Season")
 #removes rows with duplicate matchIDs
 dataset = get_unique_match_ids(dataset)
 #adds a column that states if team 1 won or lost the game
@@ -173,7 +173,7 @@ dataset = add_team_one_win_status(dataset)
 dataset_with_winrate_difference = get_winrate_differences(dataset)
 
 #The value of K to be used in K Nearest Neighbours 
-num_neighbors = 9
+num_neighbors = 25
 
 print("Atlanta Reign          [1]\nBoston Uprising        [2]\nChengdu Hunters        [3]\nDallas Fuel            [4]\nFlorida Mayhem         [5]\nGuangzhou Charge       [6]\
         \nHangzhou Spark         [7]\nHouston Outlaws        [8]\nLondon Spitfire        [9]\nLos Angeles Gladiators [10]\nLos Angeles Valiant    [11]\
@@ -197,7 +197,7 @@ prediction = predict_classification(dataset_with_winrate_difference, winrate_dif
 print(prediction)
 
 #uncomment these lines to create csv of the final state of the dataset
-# with open('finalDataset.csv', 'w') as f:
-#     for item in dataset_with_winrate_difference:
-#         f.write(','.join(map(str, item)))
-#         f.write("\n")
+with open('finalDataset.csv', 'w') as f:
+    for item in dataset_with_winrate_difference:
+        f.write(','.join(map(str, item)))
+        f.write("\n")
