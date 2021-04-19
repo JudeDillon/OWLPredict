@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, make_response
 from pymongo import MongoClient
+from flask_cors import CORS
 from bson import ObjectId
 from math import sqrt
 
 app = Flask(__name__)
+CORS(app)
 
 client = MongoClient("mongodb://127.0.0.1:27017")
 db = client.OWLPredict      #select the database
@@ -18,7 +20,7 @@ def get_winrate_difference_key(game):
 
 @app.route("/", methods=["GET"])
 def index():
-    return make_response("<h1>Hello world</h1>", 200)
+    return make_response( jsonify("Hello world"), 200)
 
 @app.route("/api/mapStats", methods=["GET"])
 def show_all_map_stats():
