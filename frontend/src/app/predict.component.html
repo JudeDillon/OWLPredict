@@ -1,0 +1,85 @@
+<div class="jumbotron">
+    <h1>OWL Predict</h1>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card text-white bg-primary mb-3">
+                <h1 class="card-header">
+                    {{webService.prediction | async}}
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <h2>Please review this business</h2>
+
+            <form [formGroup]="predictForm" (ngSubmit)="onSubmit()">
+                <div class="form-group">
+                    <label for="team1">Team 1</label>
+                    <select id="team1" name="team1" class="form-control" formControlName="team1" [ngClass]="{'error': isInvalid('team1')}">
+                        <option value="Atlanta Reign">Atlanta Reign</option>
+                        <option value="Boston Uprising">Boston Uprising</option>
+                        <option value="Chengdu Hunters">Chengdu Hunters</option>
+                        <option value="Dallas Fuel">Dallas Fuel</option>
+                        <option value="Florida Mayhem">Florida Mayhem</option>
+                        <option value="Guangzhou Charge">Guangzhou Charge</option>
+                        <option value="Hangzhou Spark">Hangzhou Spark</option>
+                        <option value="Houston Outlaws">Houston Outlaws</option>
+                        <option value="London Spitfire">London Spitfire</option>
+                        <option value="Los Angeles Gladiators">Los Angeles Gladiators</option>
+                        <option value="Los Angeles Valiant">Los Angeles Valiant</option>
+                        <option value="New York Excelsior">New York Excelsior</option>
+                        <option value="Paris Eternal">Paris Eternal</option>
+                        <option value="Philadelphia Fusion">Philadelphia Fusion</option>
+                        <option value="San Francisco Shock">San Francisco Shock</option>
+                        <option value="Seoul Dynasty">Seoul Dynasty</option>
+                        <option value="Shanghai Dragons">Shanghai Dragons</option>
+                        <option value="Toronto Defiant">Toronto Defiant</option>
+                        <option value="Vancouver Titans">Vancouver Titans</option>
+                        <option value="Washington Justice">Washington Justice</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="team2">Team 2</label>
+                    <select id="team2" name="team2" class="form-control" formControlName="team2" [ngClass]="{'error': isInvalid('team2')}">
+                        <option value="Atlanta Reign">Atlanta Reign</option>
+                        <option value="Boston Uprising">Boston Uprising</option>
+                        <option value="Chengdu Hunters">Chengdu Hunters</option>
+                        <option value="Dallas Fuel">Dallas Fuel</option>
+                        <option value="Florida Mayhem">Florida Mayhem</option>
+                        <option value="Guangzhou Charge">Guangzhou Charge</option>
+                        <option value="Hangzhou Spark">Hangzhou Spark</option>
+                        <option value="Houston Outlaws">Houston Outlaws</option>
+                        <option value="London Spitfire">London Spitfire</option>
+                        <option value="Los Angeles Gladiators">Los Angeles Gladiators</option>
+                        <option value="Los Angeles Valiant">Los Angeles Valiant</option>
+                        <option value="New York Excelsior">New York Excelsior</option>
+                        <option value="Paris Eternal">Paris Eternal</option>
+                        <option value="Philadelphia Fusion">Philadelphia Fusion</option>
+                        <option value="San Francisco Shock">San Francisco Shock</option>
+                        <option value="Seoul Dynasty">Seoul Dynasty</option>
+                        <option value="Shanghai Dragons">Shanghai Dragons</option>
+                        <option value="Toronto Defiant">Toronto Defiant</option>
+                        <option value="Vancouver Titans">Vancouver Titans</option>
+                        <option value="Washington Justice">Washington Justice</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="numberOfNeighbours">Number of neighbours</label>
+                    <select id="numberOfNeighbours" name="my-dropdown" class="form-control" formControlName="numberOfNeighbours">
+                        <option *ngFor="let number of numbers" [value]="number">{{number}}</option>
+                    </select>
+                </div>
+                <span *ngIf="isIncomplete()">You must complete all fields</span>
+                <button *ngIf="!isIncomplete()" type="submit" class="btn btn-primary">Submit</button>
+            </form>
+
+        </div>
+    </div>
+</div>

@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { AppComponent } from './app.component';
-import { FormComponent } from './form.component';
+import { PredictComponent } from './predict.component';
 import { WebService } from './web.service';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -15,16 +16,21 @@ var routes = [
     },
     {
         path: 'prediction',
-        component: FormComponent
+        component: PredictComponent
     }
 ];
 
 @NgModule({
   declarations: [
-    AppComponent, FormComponent, HomeComponent
+    AppComponent,
+    PredictComponent,
+    HomeComponent
   ],
   imports: [
-    BrowserModule, HttpClientModule, RouterModule.forRoot(routes)
+    BrowserModule,
+    HttpClientModule,
+    RouterModule.forRoot(routes),
+    ReactiveFormsModule
   ],
   providers: [WebService],
   bootstrap: [AppComponent]
