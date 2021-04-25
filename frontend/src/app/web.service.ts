@@ -21,8 +21,8 @@ export class WebService {
         })
     }
 
-    getPrediction(team1, team2, numberOfNeighbours) {
-        return this.http.get('http://localhost:5000/predict/'+ team1 +'/' + team2).subscribe(response=>
+    getPrediction(team1, team2, numberOfNeighbours, season) {
+        return this.http.get('http://localhost:5000/predict/'+ team1 +'/' + team2 + '?neighbours=' + numberOfNeighbours + '&season=' + season).subscribe(response=>
         {
             this.privatePrediction = response;
             this.predictionSubject.next(this.privatePrediction);

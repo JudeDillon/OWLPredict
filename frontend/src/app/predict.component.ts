@@ -20,15 +20,15 @@ export class PredictComponent {
         this.predictForm = this.formBuilder.group({
             team1: ['', Validators.required],
             team2: ['', Validators.required],
-            numberOfNeighbours: 33
+            numberOfNeighbours: 33,
+            season: ''
         });
         this.webService.getHelloWorld();
     }
 
     onSubmit() 
     {
-        this.webService.getPrediction(this.predictForm.value.team1, this.predictForm.value.team2, this.predictForm.value.numberOfNeighbours);
-        //console.log(this.webService.prediction)
+        this.webService.getPrediction(this.predictForm.value.team1, this.predictForm.value.team2, this.predictForm.value.numberOfNeighbours, this.predictForm.value.season);
     }
 
     isInvalid(control) {

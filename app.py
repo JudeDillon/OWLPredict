@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from flask_cors import CORS
 from bson import ObjectId
 from math import sqrt
+import re
 
 app = Flask(__name__)
 CORS(app)
@@ -74,30 +75,48 @@ def show_all_wins_for_team(team):
     data_to_return.sort(key=get_round_start_key)
     return make_response( jsonify(data_to_return), 200 )
 
-def winrate_dif_calc(team_one, team_two):
-    team_one_winrate = calc_winrate(team_one)
-    team_two_winrate = calc_winrate(team_two)
+def winrate_dif_calc(team_one, team_two, season):
+    team_one_winrate = calc_winrate(team_one, None, season)
+    team_two_winrate = calc_winrate(team_two, None, season)
 
     winrate_dif = team_one_winrate - team_two_winrate
 
     return winrate_dif
 
-def calc_winrate(team):
-    allWins = games.find({"match_winner":team}).count()
-    allGames = games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}).count()
+def calc_winrate(team, round_start_time, season):
+    total_games = 0
+    total_wins = 0
 
-    winrate = allWins/allGames
+    if(round_start_time is None):
+        total_wins = games.find({"$and":[{"match_winner":team}, {"stage": season}]}).count()
+        total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"stage": season}]}).count()
+    else:
+        for game in games.find({"$and":[
+            {"$and":[
+                {"$or":[
+                    {"team_one_name":team}, 
+                    {"team_two_name":team}]}, 
+                {"stage": season}]},
+            {"round_start_time":{"$lt":round_start_time}}]}):
+                total_games+=1
+                if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                    total_wins+=1
 
+    try:
+        winrate = total_wins / total_games
+        #if total games is 0 then winrate is 0
+    except ZeroDivisionError:
+        winrate = 0
+        
     return winrate
 
 def get_distance(winrate_difference, game):
     distance = (winrate_difference - game["winrate_difference"])**2
     return sqrt(distance)
 
-def get_neighbours(winrate_difference, num_neighbours):
+def get_neighbours(winrate_difference, num_neighbours, season):
     distances = list()
-
-    for game in games.find():
+    for game in games.find({"stage": season}):
         distance = get_distance(winrate_difference, game)
         distances.append((game, distance))
     
@@ -108,12 +127,44 @@ def get_neighbours(winrate_difference, num_neighbours):
         neighbours.append(distances[i][0])
     return neighbours
 
+def update_predictors(season):
+    winrate_list = []
+
+    for game in games.find({"stage": season}):
+        team_one = game["team_one_name"]
+        team_two = game["team_two_name"]
+        round_start_time = game["round_start_time"]
+
+        team_one_winrate = calc_winrate(team_one, round_start_time, season)
+        team_two_winrate = calc_winrate(team_two, round_start_time, season)
+
+        winrate_diff = team_one_winrate - team_two_winrate
+        winrate_list.append(winrate_diff)
+
+    i = 0
+    for game in games.find({"stage": season}):
+        games.update_one(
+            {"match_id":game["match_id"]},
+            {"$set" :{"winrate_difference": winrate_list[i]}}
+        )
+        i = i + 1
+
 @app.route("/predict/<string:team_one>/<string:team_two>", methods=["GET"])
 def make_prediction(team_one, team_two):
     num_neighbours = 33
-    winrate_difference = winrate_dif_calc(team_one, team_two)
+    season = ""
+
+    if request.args.get('neighbours'):
+        num_neighbours = int(request.args.get('neighbours'))
+    if request.args.get('season'):
+        season = str(request.args.get('season'))
+    seasonrgx = re.compile('.*' + season + '.*')
+
+    update_predictors(seasonrgx)
+
+    winrate_difference = winrate_dif_calc(team_one, team_two, seasonrgx)
     
-    neighbours = get_neighbours(winrate_difference, num_neighbours)
+    neighbours = get_neighbours(winrate_difference, num_neighbours, seasonrgx)
 
     neighbors_votes = [neighbour["team_one_win_status"] for neighbour in neighbours]
 
