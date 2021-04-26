@@ -17,6 +17,7 @@ export class PredictComponent {
     }
 
     ngOnInit() {
+        document.body.style.backgroundColor = 'black';
         this.predictForm = this.formBuilder.group({
             team1: ['', Validators.required],
             team2: ['', Validators.required],
