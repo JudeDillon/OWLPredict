@@ -25,26 +25,41 @@ def winrate_dif_calc(team_one, team_two, season):
     return winrate_dif
 
 def calc_winrate(team, round_start_time, season):
-    total_games = 0
-    total_wins = 0
+    chosen_season_games = 0
+    chosen_season_wins = 0
 
     if(round_start_time is None):
-        total_wins = games.find({"$and":[{"match_winner":team}, {"stage": season}]}).count()
-        total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"stage": season}]}).count()
+        if{season == 0}:
+            chosen_season_wins = games.find({"match_winner":team}).count()
+            chosen_season_games = games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}).count()
+        else:
+            chosen_season_wins = games.find({"match_id": ({"$and":[{"match_winner":team}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]})}).count()
+            chosen_season_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]}).count()
+
     else:
-        for game in games.find({"$and":[
-            {"$and":[
-                {"$or":[
-                    {"team_one_name":team}, 
-                    {"team_two_name":team}]}, 
-                {"stage": season}]},
-            {"round_start_time":{"$lt":round_start_time}}]}):
-                total_games+=1
-                if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
-                    total_wins+=1
+        if{season == 0}:
+            for game in games.find({"$and":[
+                    {"$or":[
+                        {"team_one_name":team}, 
+                        {"team_two_name":team}]},
+                {"round_start_time":{"$lt":round_start_time}}]}):
+                    chosen_season_games+=1
+                    if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                        chosen_season_wins+=1
+        else:
+            for game in games.find({"$and":[
+                {"$and":[
+                    {"$or":[
+                        {"team_one_name":team}, 
+                        {"team_two_name":team}]}, 
+                    {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]},
+                {"round_start_time":{"$lt":round_start_time}}]}):
+                    chosen_season_games+=1
+                    if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                        chosen_season_wins+=1
 
     try:
-        winrate = total_wins / total_games
+        winrate = chosen_season_wins / chosen_season_games
         #if total games is 0 then winrate is 0
     except ZeroDivisionError:
         winrate = 0
@@ -60,7 +75,12 @@ def get_distance(inputvalue, game):
 
 def get_neighbours(inputvalue, num_neighbours, season):
     distances = list()
-    for game in games.find({"stage": season}):
+    if{season == 0}:
+        chosen_season = games.find()
+    else:
+        chosen_season = games.find({"match_id": {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}})
+
+    for game in chosen_season:
         distance = get_distance(inputvalue, game)
         distances.append((game, distance))
     
@@ -76,25 +96,45 @@ def calc_average_final_score(team, round_start_time, season):
     total_score = 0
 
     if(round_start_time is None):
-        for game in games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"stage": season}]}):
-            if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
-                total_score = total_score + game["winning_team_final_map_score"]
-            else:
-                total_score = total_score + game["losing_team_final_map_score"]
-        total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"stage": season}]}).count()
+        if{season == 0}:
+            for game in games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}):
+                if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                    total_score = total_score + game["winning_team_final_map_score"]
+                else:
+                    total_score = total_score + game["losing_team_final_map_score"]
+            total_games = games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}).count()
+        else:
+            for game in games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]}):
+                if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                    total_score = total_score + game["winning_team_final_map_score"]
+                else:
+                    total_score = total_score + game["losing_team_final_map_score"]
+            total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]}).count()
     else:
-        for game in games.find({"$and":[
-                {"$and":[
-                    {"$or":[
-                        {"team_one_name":team}, 
-                        {"team_two_name":team}]}, 
-                    {"stage": season}]},
-                {"round_start_time":{"$lt":round_start_time}}]}):
-                    total_games += 1
-                    if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
-                        total_score = total_score + game["winning_team_final_map_score"]
-                    else:
-                        total_score = total_score + game["losing_team_final_map_score"]
+        if{season == 0}:
+            for game in games.find({"$and":[
+                        {"$or":[
+                            {"team_one_name":team}, 
+                            {"team_two_name":team}]},
+                    {"round_start_time":{"$lt":round_start_time}}]}):
+                        total_games += 1
+                        if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                            total_score = total_score + game["winning_team_final_map_score"]
+                        else:
+                            total_score = total_score + game["losing_team_final_map_score"]
+        else:
+            for game in games.find({"$and":[
+                    {"$and":[
+                        {"$or":[
+                            {"team_one_name":team}, 
+                            {"team_two_name":team}]}, 
+                        {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]},
+                    {"round_start_time":{"$lt":round_start_time}}]}):
+                        total_games += 1
+                        if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
+                            total_score = total_score + game["winning_team_final_map_score"]
+                        else:
+                            total_score = total_score + game["losing_team_final_map_score"]
 
     try:
         average_score = total_score / total_games
@@ -110,7 +150,12 @@ def update_predictors(season):
     total_average_damage_done_list = []
     average_final_score_difference_list = []
 
-    for game in games.find({"stage": season}):
+    if{season == 0}:
+        chosen_season = games.find()
+    else:
+        chosen_season = games.find({"match_id": {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}})
+
+    for game in chosen_season:
         team_one = game["team_one_name"]
         team_two = game["team_two_name"]
         round_start_time = game["round_start_time"]
@@ -126,14 +171,23 @@ def update_predictors(season):
         average_final_score_diff = team_one_average_final_score - team_two_average_final_score
         average_final_score_difference_list.append(average_final_score_diff)
 
-    minmax = list()
+    winrateminmax = list()
+    for i in range(len(winrate_list)):
+        value_min = min(winrate_list)
+        value_max = max(winrate_list)
+        winrateminmax.append([value_min, value_max])
+
+    for i in range(len(winrate_list)):
+        winrate_list[i] = (winrate_list[i] - winrateminmax[i][0]) / (winrateminmax[i][1] - winrateminmax[i][0])
+
+    scoreminmax = list()
     for i in range(len(average_final_score_difference_list)):
         value_min = min(average_final_score_difference_list)
         value_max = max(average_final_score_difference_list)
-        minmax.append([value_min, value_max])
+        scoreminmax.append([value_min, value_max])
 
     for i in range(len(average_final_score_difference_list)):
-        average_final_score_difference_list[i] = (average_final_score_difference_list[i] - minmax[i][0]) / (minmax[i][1] - minmax[i][0])
+        average_final_score_difference_list[i] = (average_final_score_difference_list[i] - scoreminmax[i][0]) / (scoreminmax[i][1] - scoreminmax[i][0])
     
     i = 0
     for game in games.find({"stage": season}):
@@ -149,25 +203,24 @@ def update_predictors(season):
 @app.route("/predict/<string:team_one>/<string:team_two>", methods=["GET"])
 def make_prediction(team_one, team_two):
     num_neighbours = 33
-    season = ""
+    season = 0
 
     if request.args.get('neighbours'):
         num_neighbours = int(request.args.get('neighbours'))
     if request.args.get('season'):
-        season = str(request.args.get('season'))
-    seasonrgx = re.compile('.*' + season + '.*')
+        season = int(request.args.get('season'))
 
-    update_predictors(seasonrgx)
+    update_predictors(season)
 
-    winrate_difference = winrate_dif_calc(team_one, team_two, seasonrgx)
+    winrate_difference = winrate_dif_calc(team_one, team_two, season)
 
-    team_one_average_final_score = calc_average_final_score(team_one, None, seasonrgx)
-    team_two_average_final_score = calc_average_final_score(team_two, None, seasonrgx)
+    team_one_average_final_score = calc_average_final_score(team_one, None, season)
+    team_two_average_final_score = calc_average_final_score(team_two, None, season)
     average_final_score_difference = team_one_average_final_score - team_two_average_final_score
 
     inputvalue = [winrate_difference, average_final_score_difference]
     
-    neighbours = get_neighbours(inputvalue, num_neighbours, seasonrgx)
+    neighbours = get_neighbours(inputvalue, num_neighbours, season)
 
     neighbors_votes = [neighbour["team_one_win_status"] for neighbour in neighbours]
 

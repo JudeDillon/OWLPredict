@@ -5,11 +5,11 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-12 text-white">
-            <h2>Please review this business</h2>
+            <h2>Make a prediction</h2>
 
             <form [formGroup]="predictForm" (ngSubmit)="onSubmit()">
                 <div class="form-group">
-                    <label for="team1">Team 1</label>
+                    <label for="team1">Team 1 (The first defending team)</label>
                     <select id="team1" name="team1" class="form-control" formControlName="team1" [ngClass]="{'error': isInvalid('team1')}">
                         <option value="Atlanta Reign">Atlanta Reign</option>
                         <option value="Boston Uprising">Boston Uprising</option>
@@ -34,7 +34,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="team2">Team 2</label>
+                    <label for="team2">Team 2 (The first attacking team)</label>
                     <select id="team2" name="team2" class="form-control" formControlName="team2" [ngClass]="{'error': isInvalid('team2')}">
                         <option value="Atlanta Reign">Atlanta Reign</option>
                         <option value="Boston Uprising">Boston Uprising</option>
@@ -67,14 +67,16 @@
                 <div class="form-group">
                     <label for="season">Season</label>
                     <select id="season" name="season" class="form-control" formControlName="season">
-                        <option value="">All Seasons</option>
-                        <option value="poo">Season 1</option>
-                        <option value="poo">Season 2</option>
-                        <option value="OWL 2020 Regular Season">Season 3</option>
+                        <option value=0>All Seasons</option>
+                        <option value=1>Season 1</option>
+                        <option value=2>Season 2</option>
+                        <option value=3>Season 3</option>
                     </select>
                 </div>
                 <span *ngIf="isIncomplete()">You must complete all fields</span>
-                <button *ngIf="!isIncomplete()" type="submit" class="btn btn-primary">Submit</button>
+                <br>
+                <span *ngIf="isSameTeams()"> You must select two different teams</span>
+                <button *ngIf="!isIncomplete() && !isSameTeams()" type="submit" class="btn btn-primary">Submit</button>
             </form>
 
         </div>

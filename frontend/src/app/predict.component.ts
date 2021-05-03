@@ -43,4 +43,8 @@ export class PredictComponent {
     isIncomplete() {
         return this.isInvalid('team1') || this.isInvalid('team2') || this.isUntouched();
     }
+
+    isSameTeams() {
+        return this.predictForm.value.team1 == this.predictForm.value.team2
+    }
 }
