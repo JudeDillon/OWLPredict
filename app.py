@@ -33,8 +33,8 @@ def calc_winrate(team, round_start_time, season):
             chosen_season_wins = games.find({"match_winner":team}).count()
             chosen_season_games = games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}).count()
         else:
-            chosen_season_wins = games.find({"match_id": ({"$and":[{"match_winner":team}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]})}).count()
-            chosen_season_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]}).count()
+            chosen_season_wins = games.find({"match_id": ({"$and":[{"match_winner":team}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]})}).count()
+            chosen_season_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]}).count()
 
     else:
         if{season == 0}:
@@ -52,7 +52,7 @@ def calc_winrate(team, round_start_time, season):
                     {"$or":[
                         {"team_one_name":team}, 
                         {"team_two_name":team}]}, 
-                    {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]},
+                    {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]},
                 {"round_start_time":{"$lt":round_start_time}}]}):
                     chosen_season_games+=1
                     if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
@@ -78,7 +78,7 @@ def get_neighbours(inputvalue, num_neighbours, season):
     if{season == 0}:
         chosen_season = games.find()
     else:
-        chosen_season = games.find({"match_id": {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}})
+        chosen_season = games.find({"match_id": {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}})
 
     for game in chosen_season:
         distance = get_distance(inputvalue, game)
@@ -104,12 +104,12 @@ def calc_average_final_score(team, round_start_time, season):
                     total_score = total_score + game["losing_team_final_map_score"]
             total_games = games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}).count()
         else:
-            for game in games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]}):
+            for game in games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]}):
                 if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
                     total_score = total_score + game["winning_team_final_map_score"]
                 else:
                     total_score = total_score + game["losing_team_final_map_score"]
-            total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]}).count()
+            total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]}).count()
     else:
         if{season == 0}:
             for game in games.find({"$and":[
@@ -128,7 +128,7 @@ def calc_average_final_score(team, round_start_time, season):
                         {"$or":[
                             {"team_one_name":team}, 
                             {"team_two_name":team}]}, 
-                        {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}]},
+                        {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]},
                     {"round_start_time":{"$lt":round_start_time}}]}):
                         total_games += 1
                         if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
@@ -153,7 +153,7 @@ def update_predictors(season):
     if{season == 0}:
         chosen_season = games.find()
     else:
-        chosen_season = games.find({"match_id": {"$and":[{"$lt":(season + 1) * 10000}, {"$gt":season * 10000}]}})
+        chosen_season = games.find({"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]})
 
     for game in chosen_season:
         team_one = game["team_one_name"]
@@ -200,8 +200,8 @@ def update_predictors(season):
         )
         i = i + 1
 
-@app.route("/predict/<string:team_one>/<string:team_two>", methods=["GET"])
-def make_prediction(team_one, team_two):
+@app.route("/predict/<string:team_one>/<string:team_two>/<string:accuracy>", methods=["GET"])
+def make_prediction(team_one, team_two, accuracy):
     num_neighbours = 33
     season = 0
 
@@ -233,11 +233,39 @@ def make_prediction(team_one, team_two):
             team_two_win_votes+=1
 
     if(team_one_win_votes > team_two_win_votes):
-        prediction = "I predict that " + team_one + " wins by " + str(team_one_win_votes/len(neighbors_votes)*100) + "% of the neighbours votes"
+        if(accuracy == "accuracy"):
+            prediction = [team_one, str(team_one_win_votes/len(neighbors_votes)*100)]
+        else:
+            prediction = "I predict that " + team_one + " is " + str(team_one_win_votes/len(neighbors_votes)*100) + "% likely to win"
     else:
-        prediction = "I predict that " + team_two + " wins by " + str(team_two_win_votes/len(neighbors_votes)*100) + "% of the neighbours votes"
+        if(accuracy == "accuracy"):
+            prediction = [team_two, str(team_two_win_votes/len(neighbors_votes)*100)]
+        else:
+            prediction = "I predict that " + team_two + " is " + str(team_two_win_votes/len(neighbors_votes)*100) + "% likely to win"
 
-    return make_response(jsonify(prediction), 200)
+    if(accuracy == "accuracy"):
+        return prediction
+    else:
+        return make_response(jsonify(prediction), 200)
+    
+@app.route("/predict/accuracy", methods=["GET"])
+def get_accuracy():
+    test_amount = games.find().count()//5
+    correct_amount = 0
+    test_games = list()
+
+    for game in games.find().sort("$natural", -1).limit(test_amount):
+        test_games.append((game["team_one_name"], game["team_two_name"], game["match_winner"]))
+    
+    for game in test_games:
+        prediction = make_prediction(game[0], game[1], "accuracy")
+        if(prediction[0] == game[2]):
+            correct_amount += 1
+            print((correct_amount/test_amount)*100)
+
+    accuracy = (correct_amount/test_amount)*100
+    print("accuracyfinal")
+    return make_response( jsonify(accuracy), 200)
 
 if __name__ == "__main__":
     app.run(debug=True)
