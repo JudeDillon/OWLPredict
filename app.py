@@ -219,7 +219,7 @@ def make_prediction(team_one, team_two, accuracy):
     if request.args.get('season'):
         season = int(request.args.get('season'))
 
-    update_predictors(season)
+    #update_predictors(season)
 
     winrate_difference = winrate_dif_calc(team_one, team_two, season)
 
