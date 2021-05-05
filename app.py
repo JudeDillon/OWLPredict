@@ -1,20 +1,29 @@
 from flask import Flask, request, jsonify, make_response
-from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+import pymongo
 from flask_cors import CORS
 from bson import ObjectId
 from math import sqrt
 import re
 
+load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-client = MongoClient("mongodb://127.0.0.1:27017")
+DATABASE_URL=f'mongodb+srv://dbUserPog:{os.environ.get("password")}@owlpredict-ire.mo4hm.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+client = pymongo.MongoClient(DATABASE_URL, ssl=True,ssl_cert_reqs='CERT_NONE')
 db = client.OWLPredict      #select the database
 games = db.games
 
 @app.route("/", methods=["GET"])
 def index():
     return make_response( jsonify("Hello world"), 200)
+
+@app.route("/sample_launch/", methods=["GET"])
+def sample():
+	results=games.find_one()
+	return make_response( jsonify(str(results)), 200)
 
 def winrate_dif_calc(team_one, team_two, season):
     team_one_winrate = calc_winrate(team_one, None, season)
@@ -268,4 +277,4 @@ def get_accuracy():
     return make_response( jsonify(accuracy), 200)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
