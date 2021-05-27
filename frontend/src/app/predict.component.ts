@@ -24,7 +24,6 @@ export class PredictComponent {
             numberOfNeighbours: 33,
             season: ''
         });
-        this.webService.getHelloWorld();
     }
 
     onSubmit() 

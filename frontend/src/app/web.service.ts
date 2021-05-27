@@ -13,14 +13,6 @@ export class WebService {
     prediction = this.predictionSubject.asObservable();
 
     constructor(private http: HttpClient) {}
-    getHelloWorld() {
-        return this.http.get('http://localhost:5000/').subscribe(response=>
-        {
-            this.privateHello = response;
-            this.helloSubject.next(this.privateHello);
-        })
-    }
-
     getPrediction(team1, team2, numberOfNeighbours, season) {
         return this.http.get('http://localhost:5000/predict/'+ team1 +'/' + team2 + '/no' + '?neighbours=' + numberOfNeighbours + '&season=' + season).subscribe(response=>
         {

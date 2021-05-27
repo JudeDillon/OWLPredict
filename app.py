@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, make_response
 from dotenv import load_dotenv
 import os
 import pymongo
+from pymongo import MongoClient
 from flask_cors import CORS
 from bson import ObjectId
 from math import sqrt
@@ -11,8 +12,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-DATABASE_URL=f'mongodb+srv://dbUserPog:{os.environ.get("password")}@owlpredict-ire.mo4hm.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-client = pymongo.MongoClient(DATABASE_URL, ssl=True,ssl_cert_reqs='CERT_NONE')
+#DATABASE_URL=f'mongodb+srv://dbUserPog:{os.environ.get("password")}@owlpredict-ire.mo4hm.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+#client = pymongo.MongoClient(DATABASE_URL, ssl=True,ssl_cert_reqs='CERT_NONE')
+client = MongoClient("mongodb://127.0.0.1:27017")
 db = client.OWLPredict      #select the database
 games = db.games
 
@@ -38,15 +40,21 @@ def calc_winrate(team, round_start_time, season):
     chosen_season_wins = 0
 
     if(round_start_time is None):
-        if{season == 0}:
+        if(season == 0):
             chosen_season_wins = games.find({"match_winner":team}).count()
             chosen_season_games = games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}).count()
         else:
-            chosen_season_wins = games.find({"match_id": ({"$and":[{"match_winner":team}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]})}).count()
+            chosen_season_wins = games.find({"$and":
+                [{"match_winner":team}, 
+                {"$and":
+                    [{"match_id":{"$lt":(season + 1) * 10000}}, 
+                    {"match_id":{"$gt":season * 10000}}]
+                }]
+            }).count()
             chosen_season_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]}).count()
 
     else:
-        if{season == 0}:
+        if(season == 0):
             for game in games.find({"$and":[
                     {"$or":[
                         {"team_one_name":team}, 
@@ -84,10 +92,10 @@ def get_distance(inputvalue, game):
 
 def get_neighbours(inputvalue, num_neighbours, season):
     distances = list()
-    if{season == 0}:
+    if(season == 0):
         chosen_season = games.find()
     else:
-        chosen_season = games.find({"match_id": {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}})
+        chosen_season = games.find({"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]})
 
     for game in chosen_season:
         distance = get_distance(inputvalue, game)
@@ -105,7 +113,7 @@ def calc_average_final_score(team, round_start_time, season):
     total_score = 0
 
     if(round_start_time is None):
-        if{season == 0}:
+        if(season == 0):
             for game in games.find({"$or":[{"team_one_name":team}, {"team_two_name":team}]}):
                 if((game["team_one_win_status"]==1 and game["team_one_name"]==team) or (game["team_one_win_status"]==0 and game["team_two_name"]==team)):
                     total_score = total_score + game["winning_team_final_map_score"]
@@ -120,7 +128,7 @@ def calc_average_final_score(team, round_start_time, season):
                     total_score = total_score + game["losing_team_final_map_score"]
             total_games = games.find({"$and":[{"$or":[{"team_one_name":team}, {"team_two_name":team}]}, {"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]}]}).count()
     else:
-        if{season == 0}:
+        if(season == 0):
             for game in games.find({"$and":[
                         {"$or":[
                             {"team_one_name":team}, 
@@ -159,7 +167,7 @@ def update_predictors(season):
     total_average_damage_done_list = []
     average_final_score_difference_list = []
 
-    if{season == 0}:
+    if(season == 0):
         chosen_season = games.find()
     else:
         chosen_season = games.find({"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]})
@@ -198,8 +206,13 @@ def update_predictors(season):
     for i in range(len(average_final_score_difference_list)):
         average_final_score_difference_list[i] = (average_final_score_difference_list[i] - scoreminmax[i][0]) / (scoreminmax[i][1] - scoreminmax[i][0])
     
+    if(season == 0):
+        chosen_season = games.find()
+    else:
+        chosen_season = games.find({"$and":[{"match_id":{"$lt":(season + 1) * 10000}}, {"match_id":{"$gt":season * 10000}}]})
+
     i = 0
-    for game in games.find({"stage": season}):
+    for game in chosen_season:
         games.update_one(
             {"match_id":game["match_id"]},
             {"$set" :{
@@ -217,9 +230,12 @@ def make_prediction(team_one, team_two, accuracy):
     if request.args.get('neighbours'):
         num_neighbours = int(request.args.get('neighbours'))
     if request.args.get('season'):
-        season = int(request.args.get('season'))
+        if(request.args.get('season') == ""):
+            season = 0
+        else:
+            season = int(request.args.get('season'))
 
-    #update_predictors(season)
+    update_predictors(season)
 
     winrate_difference = winrate_dif_calc(team_one, team_two, season)
 
