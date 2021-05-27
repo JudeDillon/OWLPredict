@@ -12,9 +12,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-#DATABASE_URL=f'mongodb+srv://dbUserPog:{os.environ.get("password")}@owlpredict-ire.mo4hm.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-#client = pymongo.MongoClient(DATABASE_URL, ssl=True,ssl_cert_reqs='CERT_NONE')
-client = MongoClient("mongodb://127.0.0.1:27017")
+DATABASE_URL=f'mongodb+srv://dbUserPog:{os.environ.get("password")}@owlpredict-ire.mo4hm.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+client = pymongo.MongoClient(DATABASE_URL, ssl=True,ssl_cert_reqs='CERT_NONE')
+#client = MongoClient("mongodb://127.0.0.1:27017")
 db = client.OWLPredict      #select the database
 games = db.games
 
@@ -235,7 +235,7 @@ def make_prediction(team_one, team_two, accuracy):
         else:
             season = int(request.args.get('season'))
 
-    update_predictors(season)
+    #update_predictors(season)
 
     winrate_difference = winrate_dif_calc(team_one, team_two, season)
 
